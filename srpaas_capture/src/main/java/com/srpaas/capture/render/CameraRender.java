@@ -14,6 +14,7 @@ import com.srpaas.capture.util.AFilter;
 import com.srpaas.capture.util.Gl2Utils;
 import com.srpaas.capture.util.OesFilter;
 import com.srpaas.capture.util.TextureUtil;
+import com.suirui.srpaas.base.util.log.SRLog;
 
 import java.util.List;
 
@@ -27,6 +28,7 @@ import javax.microedition.khronos.opengles.GL10;
  * @date2016-12-23
  **/
 public class CameraRender implements GLSurfaceView.Renderer {
+    SRLog log = new SRLog(CameraRender.class.getSimpleName(),0);
     int mTextureID = -1;
     private AFilter mOesFilter;
     //    private int width, height;
@@ -72,6 +74,7 @@ public class CameraRender implements GLSurfaceView.Renderer {
     }
 
     public void setDataSize(int dataWidth, int dataHeight) {
+        log.E("VideoCapture。。。。setDataSize...dataWidth:" + dataWidth + "  dataHeight:" + dataHeight);
         this.dataWidth = dataWidth;
         this.dataHeight = dataHeight;
         calculateMatrix(0, 0);
@@ -81,6 +84,7 @@ public class CameraRender implements GLSurfaceView.Renderer {
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         this.mViewW = width;
         this.mViewH = height;
+        log.E("VideoCapture。。。。onSurfaceChanged...width:" + width + "  height:" + height + " dataWidth:" + dataWidth + " dataHeight:" + dataHeight);
         if (this.dataWidth == 0 || this.dataHeight == 0) {
             calculateMatrix(0, 0);
             Point point = CameraInterface.getInstance().getDataSize();
@@ -100,87 +104,136 @@ public class CameraRender implements GLSurfaceView.Renderer {
     /**
      * @param isCamera 前后相机
      * @param isLand   横竖屏
+     * @param isBig    大小屏
      * @param rotaion  旋转的角度
      * @param width
      * @param height
      */
-    private void setMatrixRotation(boolean isCamera, boolean isLand, int rotaion, int width, int height) {
-        if (isLand) {//横屏
-            if (width > height) {
-                if (this.dataHeight > this.dataWidth) {
-                    setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, width, height, rotaion);
-                } else {
-                    setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, width, height, rotaion);
-                }
-            } else {
-                if (this.dataHeight > this.dataWidth) {
-                    setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, height, width, rotaion);
-                } else {
-                    setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, height, width, rotaion);
-                }
-            }
+    private void setMatrixRotation(boolean isCamera, boolean isLand, boolean isBig, int rotaion, int width, int height) {
+//        log.E("VideoCapture.setMatrixRotation..isCamera:" + isCamera + "  isLand:" + isLand + "  isBig:" + isBig
+//                + "  rotaion：" + rotaion + "  width:" + width + "  height:" + height
+//                + "  dataWidth：" + dataWidth + "  dataHeight：" + dataHeight+" CameraEntry.deviceType: "+CameraEntry.deviceType);
+       if(CameraEntry.deviceType==CameraEntry.DeviceType.box){
+           log.E("VideoCapture.....setMatrixRotation...box");
+           setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, width, height, 0);
+       }else {
+           log.E("VideoCapture.....setMatrixRotation...mobile");
+           if (isLand) {//横屏
+               log.E("VideoCapture.....setMatrixRotation...横屏");
+               if (isBig) {//大屏
+                   if (width > height) {
+                       if (this.dataHeight > this.dataWidth) {
+                           setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, width, height, rotaion);
+                       } else {
+                           setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, width, height, rotaion);
+                       }
+                   } else {
+                       if (this.dataHeight > this.dataWidth) {
+                           setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, width, height, rotaion);
+                       } else {
+                           setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, width, height, rotaion);
+                       }
+                   }
 
-        } else {//竖屏
-            if (width > height) {
-                if (this.dataHeight > this.dataWidth) {
-                    setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, height, width, rotaion);
-                } else {
-                    setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, height, width, rotaion);
-                }
-            } else {
-                if (this.dataHeight > this.dataWidth) {
-                    setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, width, height, rotaion);
-                } else {
-                    setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, width, height, rotaion);
-                }
-            }
-        }
+               } else {//非大屏
+                   if (width > height) {
+                       if (this.dataHeight > this.dataWidth) {
+                           setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, width, height, rotaion);
+                       } else {
+                           setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, width, height, rotaion);
+                       }
+                   } else {
+                       if (this.dataHeight > this.dataWidth) {
+                           setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, height, width, rotaion);
+                       } else {
+                           setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, height, width, rotaion);
+                       }
+                   }
+               }
+
+           } else {//竖屏
+               log.E("VideoCapture.....setMatrixRotation...竖屏");
+               if (isBig) {//大屏
+                   if (width < height) {
+                       if (this.dataHeight > this.dataWidth) {
+                           setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, width, height, rotaion);
+                       } else {
+                           setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, width, height, rotaion);
+                       }
+                   } else {
+                       if (this.dataHeight > this.dataWidth) {
+                           setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, height, width, rotaion);
+                       } else {
+                           setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, height, width, rotaion);
+                       }
+                   }
+
+               } else {//非大屏
+                   if (width > height) {
+                       if (this.dataHeight > this.dataWidth) {
+                           setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, height, width, rotaion);
+                       } else {
+                           setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, height, width, rotaion);
+                       }
+                   } else {
+                       if (this.dataHeight > this.dataWidth) {
+                           setShowMatrix(isCamera, matrix, this.dataWidth, this.dataHeight, width, height, rotaion);
+                       } else {
+                           setShowMatrix(isCamera, matrix, this.dataHeight, this.dataWidth, width, height, rotaion);
+                       }
+                   }
+                   log.E("setShowMatrix......非大屏");
+               }
+           }
+       }
     }
 
     public void calculateMatrix(int width, int height) {
         if (CameraInterface.getInstance().getCameraType() == CameraEntry.Type.FRONT_CAMERA.getValue()) {
+            log.E("VideoCapture...前相机....getRotation:" + CameraInterface.getInstance().getRotation() + " width:" + width + " height:" + height);
             switch (CameraInterface.getInstance().getRotation()) {
                 case CameraEntry.Rotation.ROTATE_0:
                     if (!CameraEntry.isSwitch) {
-                        setMatrixRotation(false, false, 90, width, height);
+                        setMatrixRotation(false, false, false, 90, width, height);
                     }
                     break;
                 case CameraEntry.Rotation.ROTATE_90:
                     if (!CameraEntry.isSwitch) {
-                        setMatrixRotation(false, true, 0, width, height);
+                        setMatrixRotation(false, true, false, 0, width, height);
                     }
                     break;
                 case CameraEntry.Rotation.ROTATE_180://270
                     if (!CameraEntry.isSwitch) {
-                        setMatrixRotation(false, false, 270, width, height);
+                        setMatrixRotation(false, false, false, 270, width, height);
                     }
                     break;
                 case CameraEntry.Rotation.ROTATE_270:
                     if (!CameraEntry.isSwitch) {
-                        setMatrixRotation(false, true, 180, width, height);
+                        setMatrixRotation(false, true, false, 180, width, height);
                     }
                     break;
             }
         } else {
+            log.E("VideoCapture...后相机....getRotation:" + CameraInterface.getInstance().getRotation() + " width:" + width + " height:" + height);
             switch (CameraInterface.getInstance().getRotation()) {
                 case CameraEntry.Rotation.ROTATE_0:
                     if (!CameraEntry.isSwitch) {
-                        setMatrixRotation(true, false, 270, width, height);
+                        setMatrixRotation(true, false, false, 270, width, height);
                     }
                     break;
                 case CameraEntry.Rotation.ROTATE_90:
                     if (!CameraEntry.isSwitch) {
-                        setMatrixRotation(true, true, 0, width, height);
+                        setMatrixRotation(true, true, false, 0, width, height);
                     }
                     break;
                 case CameraEntry.Rotation.ROTATE_180://90
                     if (!CameraEntry.isSwitch) {
-                        setMatrixRotation(true, true, 90, width, height);
+                        setMatrixRotation(true, true, false, 90, width, height);
                     }
                     break;
                 case CameraEntry.Rotation.ROTATE_270:
                     if (!CameraEntry.isSwitch) {
-                        setMatrixRotation(true, true, 180, width, height);
+                        setMatrixRotation(true, true, false, 180, width, height);
                     }
                     break;
             }
@@ -232,6 +285,7 @@ public class CameraRender implements GLSurfaceView.Renderer {
      * @param h
      */
     public void updateLocalVideo(int w, int h) {
+        log.E("VideoCapture。。setRequestedOrientation。。updateLocalVideo...w:" + w + "  h:" + h);
         setViewSize(w, h);
     }
 

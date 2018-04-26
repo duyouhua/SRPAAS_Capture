@@ -2,6 +2,7 @@ package com.srpaas.capture.util;
 
 import android.hardware.Camera;
 
+import com.suirui.srpaas.base.util.log.SRLog;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -9,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class PreviewFrameUtil {
+    static SRLog log = new SRLog(PreviewFrameUtil.class.getSimpleName());
     private static CameraSizeComparator sizeComparator = new CameraSizeComparator();
 
     /**
@@ -273,7 +275,18 @@ public class PreviewFrameUtil {
         }
         return list.get(i);
     }
+//是否支持当前的分辨率
+    public static boolean isPropPreviewSize(List<Camera.Size> list,int width,int height){
+        boolean isSupportPreviewSize=false;
+        for (Camera.Size s : list) {
+            if(width==s.width && height==s.height){
+                isSupportPreviewSize=true;
+                break;
+            }
+        }
+        return isSupportPreviewSize;
 
+    }
     /**
      * 匹配相机采集的分辨率，最小匹配360，最大匹配480
      *
@@ -283,11 +296,16 @@ public class PreviewFrameUtil {
      * @return
      */
     public static Camera.Size getPropPreviewSize(List<Camera.Size> list, int minHeight, int maxHeight) {
+//        for(Camera.Size size:list){
+//            log.E("getPropPreviewSize:..width*height: "+size.width+" * "+size.height);
+//        }
         Collections.sort(list, sizeComparator);
         Camera.Size mSize = null;
         Camera.Size maxSize = null;
         //先匹配360的
         for (Camera.Size s : list) {
+
+
             if (s.height == minHeight) {
                 mSize = s;
                 break;
@@ -298,7 +316,7 @@ public class PreviewFrameUtil {
                 }
             }
         }
-//        log.E("getPropPreviewSize...0000....width:" + mSize.width + "  height:" + mSize.height);
+
         //匹配480的
         for (Camera.Size s : list) {
             if (s.height == maxHeight) {
@@ -323,7 +341,7 @@ public class PreviewFrameUtil {
                 }
             }
         }
-//        log.E("getPropPreviewSize.end...width:" + mSize.width + "  height:" + mSize.height);
+        log.E("getPropPreviewSize.end...width:" + mSize.width + "  height:" + mSize.height);
         return mSize;
     }
 

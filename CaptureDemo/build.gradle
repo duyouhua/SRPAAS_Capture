@@ -10,6 +10,9 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters 'armeabi'//''armeabi-v7a','x86', 'x86_64', 'arm64-v8a','mips','mips_64',可根据自己实际需求进行筛选
+        }
     }
     buildTypes {
         release {
@@ -18,14 +21,22 @@ android {
         }
     }
 
-    //配置本地仓库
-    repositories {
-        flatDir {
 
-            dirs 'libs'
-
-        }
-    }
+    //编译so文件 src/main  ndk-build
+//    externalNativeBuild {
+//        ndkBuild {
+//            path file("src/main/jni/Android.mk")
+//        }
+//    }
+//    sourceSets {
+//        main.jniLibs.srcDirs = ['libs']
+//    }
+//    sourceSets {
+//        main {
+//            jni.srcDirs = []
+//
+//        }
+//    }
 
 }
 

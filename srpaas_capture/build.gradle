@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
 def SDK_BASENAME = "srpaas_capture";
-def SDK_VERSION = "0.1.1";
+def SDK_VERSION = "0.1.2";
 android {
     compileSdkVersion 24
     buildToolsVersion "24.0.2"
@@ -23,10 +23,17 @@ android {
     //编译so文件 src/main  ndk-build
 //    externalNativeBuild {
 //        ndkBuild {
-//            path file("src\\main\\jni\\Android.mk")
+//            path file("src/main/jni/Android.mk")
 //        }
 //    }
-
+    sourceSets {
+        main.jniLibs.srcDirs = ['libs']
+    }
+    sourceSets {
+        main {
+            jni.srcDirs = []
+        }
+    }
 //配置本地仓库
     repositories {
         flatDir {
@@ -34,6 +41,9 @@ android {
             dirs 'libs'
 
         }
+    }
+    lintOptions {
+        abortOnError false
     }
 
 }
@@ -81,4 +91,5 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:24.2.1'
     testCompile 'junit:junit:4.12'
+    compile files('libs/srpaas_base_v0.1.0.jar')
 }

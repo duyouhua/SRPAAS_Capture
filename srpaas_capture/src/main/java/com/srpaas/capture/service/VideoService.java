@@ -6,6 +6,8 @@ public interface VideoService {
     void addVideoServiceListener(VideoServiceListener listener);
 
     void removeVideoServiceListener();
+    void setDeviceType(int type);
+    int getDeviceType();
 
     /**
      * 视频采集
@@ -26,5 +28,12 @@ public interface VideoService {
      * @param cameraType
      */
     void switchCamera(Context context, int cameraType);
+
+    /**
+     * 设置采集的分辨率
+     * @param width
+     * @param height
+     */
+    void setCaptureSize(int width,int height);
 
 }

@@ -6,10 +6,13 @@ import com.srpaas.capture.constant.CameraEntry;
 import com.srpaas.capture.render.CameraCaptureListener;
 import com.srpaas.capture.render.VideoCapture;
 import com.srpaas.capture.util.PreviewFrameUtil;
+import com.suirui.srpaas.base.util.log.SRLog;
 
 public class VideoServiceImpl implements VideoService, CameraCaptureListener.CameraVideoListener {
+    SRLog log = new SRLog(VideoServiceImpl.class.getSimpleName());
     private VideoServiceListener mListener;
     private VideoCapture videoCapture;
+
 
     public VideoServiceImpl() {
         if (videoCapture == null)
@@ -25,6 +28,18 @@ public class VideoServiceImpl implements VideoService, CameraCaptureListener.Cam
     @Override
     public void removeVideoServiceListener() {
         this.mListener = null;
+    }
+
+    @Override
+    public void setDeviceType(int type) {
+        CameraEntry.deviceType=type;
+
+    }
+
+    @Override
+    public int getDeviceType() {
+        return  CameraEntry.deviceType;
+
     }
 
     @Override
@@ -57,87 +72,101 @@ public class VideoServiceImpl implements VideoService, CameraCaptureListener.Cam
             videoCapture.switchCamera(context, cameraType);
     }
 
+    @Override
+    public void setCaptureSize(int width, int height) {
+        CameraEntry.CaptureSize.width=width;
+        CameraEntry.CaptureSize.height=height;
+
+    }
+
 
     @Override
     public void onPreviewCallback(final byte[] data, final int width, final int height, int cameraType, int rotation) {
         if (data == null)
             return;
-        switch (rotation) {
-            case CameraEntry.Rotation.ROTATE_0:// 旋转270度
-                if (cameraType == CameraEntry.Type.FRONT_CAMERA.getValue()) {
+        //width:1920 height: 1080 cameraType: 0 rotation:0
+//        log.E("onPreviewCallback....width:"+width+" height: "+height+" cameraType: "+cameraType+" rotation:"+rotation);
+      if(CameraEntry.deviceType==CameraEntry.DeviceType.box){
+          onPreviewCallback(data, width, height,false, 0, false);
+      }else {//手机端
+
+          switch (rotation) {
+              case CameraEntry.Rotation.ROTATE_0:// 旋转270度
+                  if (cameraType == CameraEntry.Type.FRONT_CAMERA.getValue()) {
 //                    log.E("onPreviewCallback...front..旋转270度 ...width:" + width + " height:" + height + "  cameraType:" + cameraType);
-                    if (CameraEntry.isToYuv.isToYuv420) {
-                        render(data, width, height, true, 270, false);
-                    } else {
-                        onPreviewCallback(data, width, height, true, 270, false);
-                    }
+                      if (CameraEntry.isToYuv.isToYuv420) {
+                          render(data, width, height, true, 270, false);
+                      } else {
+                          onPreviewCallback(data, width, height, true, 270, false);
+                      }
 
-                } else {// 后
-                    if (CameraEntry.isToYuv.isToYuv420) {
-                        render(data, width, height, true, 90, false);
-                    } else {
-                        onPreviewCallback(data, width, height, true, 90, false);
-                    }
-                }
-                break;
-            case CameraEntry.Rotation.ROTATE_90:
-                if (cameraType == CameraEntry.Type.FRONT_CAMERA.getValue()) {
+                  } else {// 后
+                      if (CameraEntry.isToYuv.isToYuv420) {
+                          render(data, width, height, true, 90, false);
+                      } else {
+                          onPreviewCallback(data, width, height, true, 90, false);
+                      }
+                  }
+                  break;
+              case CameraEntry.Rotation.ROTATE_90:
+                  if (cameraType == CameraEntry.Type.FRONT_CAMERA.getValue()) {
 //                    log.E("onPreviewCallback...front...不旋转.镜像..width:" + width + " height:" + height + "  cameraType:" + cameraType);
-                    if (CameraEntry.isToYuv.isToYuv420) {
-                        render(data, width, height, false, 0, true);
-                    } else {
-                        onPreviewCallback(data, width, height, false, 0, true);
-                    }
-                } else {
+                      if (CameraEntry.isToYuv.isToYuv420) {
+                          render(data, width, height, false, 0, true);
+                      } else {
+                          onPreviewCallback(data, width, height, false, 0, true);
+                      }
+                  } else {
 //                    log.E("onPreviewCallback...back...不旋转...width:" + width + " height:" + height + "  cameraType:" + cameraType);
-                    if (CameraEntry.isToYuv.isToYuv420) {
-                        render(data, width, height, false, 0, false);
-                    } else {
-                        onPreviewCallback(data, width, height, false, 0, false);
-                    }
-                }
-                break;
-            case CameraEntry.Rotation.ROTATE_180:// 旋转90度
-                if (cameraType == CameraEntry.Type.FRONT_CAMERA.getValue()) {
+                      if (CameraEntry.isToYuv.isToYuv420) {
+                          render(data, width, height, false, 0, false);
+                      } else {
+                          onPreviewCallback(data, width, height, false, 0, false);
+                      }
+                  }
+                  break;
+              case CameraEntry.Rotation.ROTATE_180:// 旋转90度
+                  if (cameraType == CameraEntry.Type.FRONT_CAMERA.getValue()) {
 //                    log.E("onPreviewCallback..front....旋转90度并镜像..width:" + width + " height:" + height + "  cameraType:" + cameraType);
-                    if (CameraEntry.isToYuv.isToYuv420) {
-                        render(data, width, height, true, 90, true);
-                    } else {
-                        onPreviewCallback(data, width, height, true, 90, true);
-                    }
+                      if (CameraEntry.isToYuv.isToYuv420) {
+                          render(data, width, height, true, 90, true);
+                      } else {
+                          onPreviewCallback(data, width, height, true, 90, true);
+                      }
 
-                } else {
+                  } else {
 //                    log.E("onPreviewCallback..back...旋转270度并镜像 ...width:" + width + " height:" + height + "  cameraType:" + cameraType);
 
-                    if (CameraEntry.isToYuv.isToYuv420) {
-                        render(data, width, height, true, 270, true);
-                    } else {
-                        onPreviewCallback(data, width, height, true, 270, true);
-                    }
-                }
-                break;
-            case CameraEntry.Rotation.ROTATE_270:// 旋转180度
-                if (cameraType == CameraEntry.Type.FRONT_CAMERA.getValue()) {
+                      if (CameraEntry.isToYuv.isToYuv420) {
+                          render(data, width, height, true, 270, true);
+                      } else {
+                          onPreviewCallback(data, width, height, true, 270, true);
+                      }
+                  }
+                  break;
+              case CameraEntry.Rotation.ROTATE_270:// 旋转180度
+                  if (cameraType == CameraEntry.Type.FRONT_CAMERA.getValue()) {
 //                    log.E("onPreviewCallback...front... 旋转180度并镜像...width:" + width + " height:" + height + "  cameraType:" + cameraType);
-                    if (CameraEntry.isToYuv.isToYuv420) {
-                        render(data, width, height, true, 180, true);
-                    } else {
-                        onPreviewCallback(data, width, height, true, 180, true);
-                    }
+                      if (CameraEntry.isToYuv.isToYuv420) {
+                          render(data, width, height, true, 180, true);
+                      } else {
+                          onPreviewCallback(data, width, height, true, 180, true);
+                      }
 
-                } else {
+                  } else {
 //                    log.E("onPreviewCallback...back... 旋转180度...width:" + width + " height:" + height + "  cameraType:" + cameraType);
-                    if (CameraEntry.isToYuv.isToYuv420) {
-                        render(data, width, height, true, 180, false);
-                    } else {
-                        onPreviewCallback(data, width, height, true, 180, false);
-                    }
-                }
-                break;
+                      if (CameraEntry.isToYuv.isToYuv420) {
+                          render(data, width, height, true, 180, false);
+                      } else {
+                          onPreviewCallback(data, width, height, true, 180, false);
+                      }
+                  }
+                  break;
 
-            default:
-                break;
-        }
+              default:
+                  break;
+          }
+      }
     }
 
     /**

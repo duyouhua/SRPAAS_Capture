@@ -3,6 +3,7 @@ package com.srpaas.capture.constant;
 public class CameraEntry {
     public static boolean isSwitch = false;//解决前后相机切换时，最后一帧图像倒置问题
     public static boolean isRotate = false;//解决相机旋转时，最后一帧图像显示不对问题
+    public static int deviceType=CameraEntry.DeviceType.mobile;
 //    public static boolean isRotationSwitch = false;//切换过程中，相机旋转了
 
     public enum Type {
@@ -25,7 +26,15 @@ public class CameraEntry {
         public static final int ROTATE_180 = 2;
         public static final int ROTATE_270 = 3;
     }
+    public class DeviceType {
+        public static final int mobile = 0;
+        public static final int box = 1;
+    }
+    public static class CaptureSize{
+        public static int width = 640;
+        public static int height = 480;
 
+    }
     public static class isToYuv {
         public static boolean isToYuv420 = false;//采集回的数据是否需要在capture中转码，旋转或镜像
     }

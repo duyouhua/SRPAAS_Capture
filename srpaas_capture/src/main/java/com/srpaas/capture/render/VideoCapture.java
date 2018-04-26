@@ -14,6 +14,7 @@ import android.os.Handler;
 import com.srpaas.capture.constant.CameraEntry;
 import com.srpaas.capture.util.PreviewFrameUtil;
 import com.srpaas.capture.util.TextureUtil;
+import com.suirui.srpaas.base.util.log.SRLog;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,8 +23,9 @@ import java.util.concurrent.BlockingQueue;
 
 @SuppressLint("NewApi")
 public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFrameAvailableListener {
-    int minPreviewHeight = 360;
-    int mPreviewHeight = 480;
+    SRLog log = new SRLog(VideoCapture.class.getSimpleName());
+     int minPreviewHeight = 360;
+     int mPreviewHeight = 480;
     //-----------------------------------------
     boolean showVideo = false;
     boolean mStarted = false;
@@ -93,7 +95,7 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
                 start = end - start;
                 //限制发送的帧数。
                 end = delta - start;
-                if (end > 0) {//为什么在这里睡眠呢，假设现在的网络好，机器强劲，其实也没有必要一直发送视频帧的，这里就可 以限制发送。预计发送一次为200毫秒，一秒为5帧。那发送的时间小于200的就要等待了。这样就限制了，如果多于200毫秒的，就不要睡眠了。个人感觉，如果帧数到达12左右，基本感觉是较流畅了，再往上，不会有太大的区别（前提：目前手机也达到不20+，而且网络。。。）
+                if (end > 0) {
                     try {
                         Thread.sleep(end);
                     } catch (InterruptedException e) {
@@ -114,50 +116,70 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
 
 
     public boolean startCapture(Context context, int mCameraType) {
+        log.E( "VideoCapture..startCapture...设置相机的类型...mCameraType:" + mCameraType);
+        CameraInterface.getInstance().setCameraType(mCameraType);
 //        log.E( "VideoCapture.....设置相机的类型...mCameraType:" + mCameraType);
         try {
             if (mCamera == null || !CameraInterface.getInstance().isOpenCamera()) {
+
                 int cameraCount = Camera.getNumberOfCameras();
-                if (cameraCount <= 0)
-                    return false;
-                boolean isHaveCamera = false;//是否有当前要打开的相机是否存在
-                int existCamera = -1;
-                Camera.CameraInfo info;
-                for (int i = 0; i < cameraCount; i++) {
-                    info = new Camera.CameraInfo();
-                    Camera.getCameraInfo(i, info);
-                    if (info.facing == mCameraType) {
-                        isHaveCamera = true;
-                        break;
-                    } else {
-                        existCamera = info.facing;
-                    }
-                }
-                if (!isHaveCamera) {//没有当前要打开的相机，则打开当前存在的相机
-                    if (existCamera == -1) {
-                        return false;
-                    }
-                    mCameraType = existCamera;
-                }
+
+                  if(CameraEntry.deviceType==CameraEntry.DeviceType.mobile){
+                      if (cameraCount <= 0)
+                          return false;
+                      boolean isHaveCamera = false;//是否有当前要打开的相机是否存在
+                      int existCamera = -1;
+                      Camera.CameraInfo info;
+                      for (int i = 0; i < cameraCount; i++) {
+                          info = new Camera.CameraInfo();
+                          Camera.getCameraInfo(i, info);
+                          if (info.facing == mCameraType) {
+                              isHaveCamera = true;
+                              break;
+                          } else {
+                              existCamera = info.facing;
+                          }
+                      }
+                      if (!isHaveCamera) {//没有当前要打开的相机，则打开当前存在的相机
+                          if (existCamera == -1) {
+                              return false;
+                          }
+                          mCameraType = existCamera;
+                      }
+                      mCamera = Camera.open(mCameraType);
+                      log.E("VideoCapture。。startCapture...mobile: "+mCameraType);
+                  }else{
+                      mCamera=Camera.open(mCameraType);
+                      log.E("VideoCapture。。startCapture...cameraCount: 1111");
+
+                  }
                 CameraInterface.getInstance().setCameraType(mCameraType);
-                mCamera = Camera.open(mCameraType);
                 CameraInterface.getInstance().isOpenCamera(true);
             }
             if (mCamera != null) {
+                log.E("VideoCapture。。startCapture...cameraCount: 1111");
                 param = mCamera.getParameters();
                 cameraList = getCurrentSupportedVideoSizes(param);
-                if (cameraList == null || cameraList.size() <= 0)
+                if (cameraList == null || cameraList.size() <= 0) {
                     return false;
-//                for (int i = 0; i < cameraList.size(); i++) {
-//                    Camera.Size size = cameraList.get(i);
-//                    if (size != null) {
-//                log.E("startCapture....height:" + size.height + " width:" + size.width);
-//                    }
+                }
+
+                    boolean isSupport = PreviewFrameUtil.isPropPreviewSize(cameraList, CameraEntry.CaptureSize.width, CameraEntry.CaptureSize.height);
+                    if(isSupport) {
+                        param.setPreviewSize(CameraEntry.CaptureSize.width, CameraEntry.CaptureSize.height);
+                    }else {
+                        preSize = PreviewFrameUtil.getPropPreviewSize(cameraList, minPreviewHeight, mPreviewHeight);
+                        if (preSize != null) {
+                            param.setPreviewSize(preSize.width, preSize.height);
+                        }
+                    }
+
+
+//
+//                for (Camera.Size s : cameraList) {
+//                    log.E("cameraList...."+s.width+" : "+s.height);
+//
 //                }
-//                preSize = PreviewFrameUtil.getPropPreviewSize(cameraList, minPreviewHeight);
-                preSize = PreviewFrameUtil.getPropPreviewSize(cameraList, minPreviewHeight, mPreviewHeight);
-                if (preSize != null)
-                    param.setPreviewSize(preSize.width, preSize.height);
                 param.setPreviewFormat(ImageFormat.NV21);
                 mCamera.setParameters(param);
                 param = mCamera.getParameters();
@@ -352,6 +374,7 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
 
     //相机切换
     public void switchCamera(Context context, int cameraType) {
+        log.E("VideoCapture.....开始切换");
         CameraEntry.isSwitch = true;
         CameraInterface.getInstance().setSwitch(true);
         onPause();

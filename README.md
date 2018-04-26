@@ -17,3 +17,10 @@ dependencies {
 如果项目中引用该模块编译出错，需要修改项目路径下的build.gradle 脚本文件：
  classpath 'com.android.tools.build:gradle:xxx' 加注释
 
+
+ ##打包命令
+  chmod +x gradlew
+  项目根目录下执行：./gradlew makeJar
+
+
+

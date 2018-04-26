@@ -9,11 +9,13 @@ package com.srpaas.capture.util;
 
 import android.opengl.Matrix;
 
+import com.suirui.srpaas.base.util.log.SRLog;
 
 /**
  * Description:
  */
 public class Gl2Utils {
+    SRLog log = new SRLog(Gl2Utils.class.getSimpleName());
     private static Gl2Utils g12UtilInstance = null;
 
     public Gl2Utils() {
@@ -29,6 +31,7 @@ public class Gl2Utils {
 
     public void getShowMatrix(float[] matrix, int dataWidth, int dataHeight, int width, int
             height) {
+        log.E("VideoCapture....getShowMatrix..dataWidth:" + dataWidth + "  dataHeight:" + dataHeight + "  width:" + width + "  height：" + height);
         if (dataHeight > 0 && dataWidth > 0 && width > 0 && height > 0) {
             float sWhView = (float) width / height;
             float sWhImg = (float) dataWidth / dataHeight;
