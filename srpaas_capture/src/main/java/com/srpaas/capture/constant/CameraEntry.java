@@ -1,5 +1,7 @@
 package com.srpaas.capture.constant;
 
+import android.graphics.ImageFormat;
+
 public class CameraEntry {
     public static boolean isSwitch = false;//解决前后相机切换时，最后一帧图像倒置问题
     public static boolean isRotate = false;//解决相机旋转时，最后一帧图像显示不对问题
@@ -38,4 +40,14 @@ public class CameraEntry {
     public static class isToYuv {
         public static boolean isToYuv420 = false;//采集回的数据是否需要在capture中转码，旋转或镜像
     }
+    public static class CaptureParam{//采集参数设置
+        public static int  mFps=15;//默认15帧
+        public static long delta=1000 / mFps;
+    }
+    public static class CaptrueRenderCode{
+        public static boolean isRender=true;//是否本地渲染
+        public static boolean isCode=true;//是否发送给sdk编码
+        public static int Image_Format=ImageFormat.NV21;
+    }
+
 }

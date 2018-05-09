@@ -79,6 +79,18 @@ public class VideoServiceImpl implements VideoService, CameraCaptureListener.Cam
 
     }
 
+    @Override
+    public void setCaptureFps(int mFps) {
+        CameraEntry.CaptureParam.mFps=mFps;
+        CameraEntry.CaptureParam.delta=1000/mFps;
+    }
+
+    @Override
+    public void setCaptrueRenderCode(boolean isRender, boolean isCode) {
+        CameraEntry.CaptrueRenderCode.isRender=isRender;
+        CameraEntry.CaptrueRenderCode.isCode=isCode;
+    }
+
 
     @Override
     public void onPreviewCallback(final byte[] data, final int width, final int height, int cameraType, int rotation) {

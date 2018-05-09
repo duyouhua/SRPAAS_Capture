@@ -36,4 +36,17 @@ public interface VideoService {
      */
     void setCaptureSize(int width,int height);
 
+    /**
+     * 设置帧率
+     * @param mFps
+     */
+    void setCaptureFps(int mFps);
+
+    /**
+     * 测试
+     * @param isRender true 渲染 false 不渲染
+     * @param isCode  true 编码  false 不编码
+     */
+    void setCaptrueRenderCode(boolean isRender,boolean isCode);
+
 }

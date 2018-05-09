@@ -10,6 +10,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.opengl.GLSurfaceView;
 import android.os.Handler;
+import android.util.Log;
 
 import com.srpaas.capture.constant.CameraEntry;
 import com.srpaas.capture.util.PreviewFrameUtil;
@@ -21,9 +22,11 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import static android.content.ContentValues.TAG;
+
 @SuppressLint("NewApi")
 public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFrameAvailableListener {
-    SRLog log = new SRLog(VideoCapture.class.getSimpleName());
+    SRLog log = new SRLog(VideoCapture.class.getSimpleName(),1);
      int minPreviewHeight = 360;
      int mPreviewHeight = 480;
     //-----------------------------------------
@@ -42,8 +45,6 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
     private Handler handler;
     private SensorManager sm;
     private Sensor sensor;
-    private int mFps = 15;
-    long delta = 1000 / mFps;
     private List<GLSurfaceView> glSurfaceViewList;
     private List<Camera.Size> cameraList;
     private GLSurfaceView glSurfaceView;
@@ -54,7 +55,7 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
         public void run() {
             while (showVideo && mStarted) {
                 sendVideoFrame();//在这里把帧发出去
-                if (mFrameList.size() >= mFps) {//缓存满了
+                if (mFrameList.size() >= CameraEntry.CaptureParam.mFps) {//缓存满了
                     Object[] obj = (Object[]) mFrameList.poll();
                     mFrameList.clear();
                     mFrameList.offer(obj);
@@ -80,6 +81,7 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
     }
 
     private void sendVideoFrame() {
+
         Object[] obj = null;
         obj = (Object[]) mFrameList.poll();
         if (null != obj) {
@@ -94,7 +96,7 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
                 long end = System.currentTimeMillis();
                 start = end - start;
                 //限制发送的帧数。
-                end = delta - start;
+                end = CameraEntry.CaptureParam.delta - start;
                 if (end > 0) {
                     try {
                         Thread.sleep(end);
@@ -107,10 +109,11 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
             obj = null;
         } else {
             try {
-                Thread.sleep(delta);
+                Thread.sleep(CameraEntry.CaptureParam.delta);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
         }
     }
 
@@ -149,8 +152,8 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
                       mCamera = Camera.open(mCameraType);
                       log.E("VideoCapture。。startCapture...mobile: "+mCameraType);
                   }else{
+                      log.E("VideoCapture。。startCapture...cameraCount: 1111。。。"+mCameraType);
                       mCamera=Camera.open(mCameraType);
-                      log.E("VideoCapture。。startCapture...cameraCount: 1111");
 
                   }
                 CameraInterface.getInstance().setCameraType(mCameraType);
@@ -163,6 +166,7 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
                 if (cameraList == null || cameraList.size() <= 0) {
                     return false;
                 }
+
 
                     boolean isSupport = PreviewFrameUtil.isPropPreviewSize(cameraList, CameraEntry.CaptureSize.width, CameraEntry.CaptureSize.height);
                     if(isSupport) {
@@ -180,17 +184,23 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
 //                    log.E("cameraList...."+s.width+" : "+s.height);
 //
 //                }
-                param.setPreviewFormat(ImageFormat.NV21);
+                param.setPreviewFormat(CameraEntry.CaptrueRenderCode.Image_Format);
+//                param.setPreviewFormat(ImageFormat.YV12);
+//                param.setPreviewFrameRate(5);
+//                param.setPreviewFpsRange(5000,5000);
                 mCamera.setParameters(param);
                 param = mCamera.getParameters();
+
                 int mformat = param.getPreviewFormat();
                 this.mCaptureWidth = param.getPreviewSize().width;
                 this.mCaptureHeight = param.getPreviewSize().height;
+
                 int bufSize = mCaptureWidth * mCaptureHeight * ImageFormat.getBitsPerPixel(mformat) / 8;
+                mCamera.setPreviewCallbackWithBuffer(this);
                 for (int i = 0; i < numCaptureBuffers; i++) {
                     mCamera.addCallbackBuffer(new byte[bufSize]);
                 }
-                mCamera.setPreviewCallbackWithBuffer(this);
+
                 Camera.Size pre = param.getPreviewSize();
 //                log.E( "VideoCapture....startCapture.." + pre.height + "  :" + pre.width);
                 mPreSize = new Point(pre.height, pre.width);
@@ -199,8 +209,10 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
 
             showVideo = true;
             mStarted = true;
-            mFrameThread = new Thread(frameRunnable);
-            mFrameThread.start();
+            if(CameraEntry.CaptrueRenderCode.isCode) {
+                mFrameThread = new Thread(frameRunnable);
+                mFrameThread.start();
+            }
             return setPreviewTexture(TextureUtil.getSurfaceTexture());
         } catch (Exception e) {
             if (mCamera != null) {
@@ -214,9 +226,11 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
     }
 
     private boolean setPreviewTexture(SurfaceTexture surface) {
+
         if (mCamera == null || !CameraInterface.getInstance().isOpenCamera())
             return false;
         try {
+
             mCamera.setPreviewTexture(surface);
             startPreview();
             return true;
@@ -228,20 +242,22 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
 
     @Override
     public void onPreviewFrame(byte[] data, Camera callbackCamera) {
-        if (mCamera == null || !CameraInterface.getInstance().isOpenCamera() || mCamera != callbackCamera) {
-            return;
+        log.E("onPreviewFrame.....onPreviewFrame...");
+        if(CameraEntry.CaptrueRenderCode.isCode) {
+
+            if (mCamera == null || !CameraInterface.getInstance().isOpenCamera() || mCamera != callbackCamera) {
+                return;
+            }
+            try {
+                int rotation = CameraInterface.getInstance().getRotation();
+                cameraType = CameraInterface.getInstance().getCameraType();
+                putVideoFrame(data, mCaptureWidth, mCaptureHeight, cameraType, rotation);//限时发送帧率
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+           mCamera.addCallbackBuffer(data);
         }
-//        log.E( "VideoCapture。。。。。onPreviewFrame...getCameraType:" + CameraInterface.getInstance().getCameraType());
-        try {
-//            log.E( "VideoCapture..onPreviewFrame.." + callbackCamera.getParameters().getPreviewFrameRate());
-            int rotation = CameraInterface.getInstance().getRotation();
-            cameraType = CameraInterface.getInstance().getCameraType();
-//            CameraCaptureListener.getInstance().onPreviewCallback(data, mCaptureWidth, mCaptureHeight, cameraType, rotation);
-            putVideoFrame(data, mCaptureWidth, mCaptureHeight, cameraType, rotation);//限时发送帧率
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        mCamera.addCallbackBuffer(data);
+
     }
 
     public boolean stopCapture() {
@@ -301,6 +317,7 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
     }
 
     public void startPreview() {
+
         if (CameraInterface.getInstance().isPreviewing())
             return;
         if (mCamera == null || !CameraInterface.getInstance().isOpenCamera())
@@ -332,6 +349,9 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
 
     @Override
     public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+        if(!CameraEntry.CaptrueRenderCode.isRender){
+            return;
+        }
         glSurfaceViewList = CameraInterface.getInstance().getCreateGLSurfaceView();
         if (glSurfaceViewList == null || glSurfaceViewList.size() <= 0)
             return;
@@ -345,13 +365,13 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
         }
     }
 
-//    private int getSupportedPreviewFpsRange(Camera.Parameters param) {
+    private void getSupportedPreviewFpsRange(Camera.Parameters param) {
 //        int mFPS = 0;
-//        List<int[]> range = param.getSupportedPreviewFpsRange();
-//        for (int j = 0; j < range.size(); j++) {
-//            int[] r = range.get(j);
-//            for (int k = 0; k < r.length; k++) {
-//                Log.e("", "startCapture.... r[k]:" + r[k]);
+        List<int[]> range = param.getSupportedPreviewFpsRange();
+        for (int j = 0; j < range.size(); j++) {
+            int[] r = range.get(j);
+            for (int k = 0; k < r.length; k++) {
+                log.E(  "onPreviewFrame...startCapture.... r[k]:" + r[k]);
 //                if (fps == r[k]) {
 //                    mFPS = fps / 1000;
 //                    break;
@@ -362,15 +382,15 @@ public class VideoCapture implements Camera.PreviewCallback, SurfaceTexture.OnFr
 //                    }
 //
 //                }
-//            }
-//
+            }
+
 //            if (mFPS == 0) {
 //                mFPS = r[(r.length) - 1] / 1000;
 //            }
-//        }
-//        Log.e("", "startCapture....mFPS:" + mFPS);
+        }
+//        log.E( "startCapture....mFPS:" + mFPS);
 //        return mFPS;
-//    }
+    }
 
     //相机切换
     public void switchCamera(Context context, int cameraType) {
